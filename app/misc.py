@@ -153,6 +153,14 @@ class SiteUser(object):
         elif config.site.allow_uploads and (config.site.upload_min_level <= get_user_level(self.uid, self.score)[0]):
             self.canupload = True
 
+        self.can_pm_users = False
+        if config.site.send_pm_to_user_min_level <= get_user_level(self.uid, self.score)[0] or self.admin:
+            self.can_pm_users = True
+
+        self.can_pm_admins = False
+        if config.site.send_pm_to_admin_min_level <= get_user_level(self.uid, self.score)[0] or self.admin:
+            self.can_pm_admins = True
+
     def __repr__(self):
         return "<SiteUser {0}>".format(self.uid)
 
@@ -227,7 +235,6 @@ class SiteUser(object):
                 return ''
             return css.content
         return ''
-
 
 class SiteAnon(AnonymousUserMixin):
     """ A subclass of AnonymousUserMixin. Used for logged out users. """
@@ -648,6 +655,13 @@ def getAdminUserBadges():
             ret.append(badges[bg['value']])
     return ret
 
+def is_user_admin(uid):
+    get_admin_users = User.select(User.uid).join(UserMetadata).where((UserMetadata.key == 'admin') & (UserMetadata.value == '1'))
+
+    if uid in get_admin_users:
+        return True
+        
+    return False
 
 @cache.memoize(300)
 def getTodaysTopPosts():
